@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto di Logica</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f0f0; }
+        #game { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
+        #maze { width: 400px; height: 400px; background-color: #fff; position: relative; border: 2px solid #333; }
+        .player { width: 20px; height: 20px; background-color: red; position: absolute; }
+        .wall { width: 20px; height: 20px; background-color: black; position: absolute; }
+        .door { width: 20px; height: 20px; background-color: blue; position: absolute; }
+        .exit { width: 20px; height: 20px; background-color: green; position: absolute; }
+        #puzzle { margin-top: 20px; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="game">
+    <h1>Labirinto di Logica</h1>
+    <div id="maze"></div>
+    <div id="puzzle">
+        <p id="puzzle-question"></p>
+        <input type="text" id="puzzle-answer" />
+        <button onclick="checkAnswer()">Invia</button>
+    </div>
+</div>
+
+<script>
+    const maze = document.getElementById('maze');
+    const player = document.createElement('div');
+    player.classList.add('player');
+    maze.appendChild(player);
+    let playerPosition = { x: 1, y: 1 };
+
+    const walls = [
+        { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 },
+        { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 },
+        { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 },
+        { x: 4, y: 6 }, { x: 3, y: 6 }, { x: 2, y: 6 },
+        { x: 1, y: 6 }, { x: 1, y: 5 }, { x: 1, y: 4 },
+        { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 3, y: 2 },
+        { x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 3 },
+        { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+        { x: 7, y: 1 }, { x: 8, y: 1 }, { x: 8, y: 2 },
+        { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 9, y: 4 },
+        { x: 9, y: 3 }, { x: 9, y: 2 }, { x: 10, y: 2 },
+        { x: 10, y: 1 }, { x: 10, y: 0 }, { x: 11, y: 0 },
+        { x: 12, y: 0 }, { x: 12, y: 1 }, { x: 12, y: 2 },
+        { x: 13, y: 2 }, { x: 14, y: 2 }, { x: 14, y: 3 },
+        { x: 14, y: 4 }, { x: 15, y: 4 }, { x: 15, y: 3 },
+        { x: 16, y: 3 }, { x: 16, y: 4 }, { x: 16, y: 5 },
+        { x: 17, y: 5 }, { x: 17, y: 6 }, { x: 18, y: 6 },
+        { x: 19, y: 6 }, { x: 19, y: 5 }, { x: 19, y: 4 }
+    ];
+
+    const doors = [
+        { x: 1, y: 8, question: 'Qual è 2 + 2?', answer: '4' },
+        { x: 10, y: 10, question: 'Qual è la capitale della Francia?', answer: 'Parigi' }
+    ];
+
+    const exit = { x: 18, y: 18 };
+
+    function positionPlayer() {
+        player.style.top = playerPosition.y * 20 + 'px';
+        player.style.left = playerPosition.x * 20 + 'px';
+    }
+
+    function createMaze() {
+        walls.forEach(wall => {
+            const wallDiv = document.createElement('div');
+            wallDiv.classList.add('wall');
+            wallDiv.style.top = wall.y * 20 + 'px';
+            wallDiv.style.left = wall.x * 20 + 'px';
+            maze.appendChild(wallDiv);
+        });
+        
+        doors.forEach(door => {
+            const doorDiv = document.createElement('div');
+            doorDiv.classList.add('door');
+            doorDiv.style.top = door.y * 20 + 'px';
+            doorDiv.style.left = door.x * 20 + 'px';
+            maze.appendChild(doorDiv);
+        });
+
+        const exitDiv = document.createElement('div');
+        exitDiv.classList.add('exit');
+        exitDiv.style.top = exit.y * 20 + 'px';
+        exitDiv.style.left = exit.x * 20 + 'px';
+        maze.appendChild(exitDiv);
+    }
+
+    function resetLevel() {
+        playerPosition = { x: 1, y: 1 };
+        positionPlayer();
+        document.getElementById('puzzle').style.display = 'none';
+    }
+
+    function checkAnswer() {
+        const answer = document.getElementById('puzzle-answer').value;
+        const currentDoor = doors.find(d => d.x === playerPosition.x && d.y === playerPosition.y);
+        if (currentDoor) {
+            if (answer === currentDoor.answer) {
+                alert('Risposta corretta! Puoi passare.');
+                document.getElementById('puzzle').style.display = 'none';
+
+                // Controlla se il giocatore ha raggiunto l'uscita
+                if (playerPosition.x === exit.x && playerPosition.y === exit.y) {
+                    alert('Hai vinto! Sei uscito dal labirinto!');
+                    resetLevel(); // In caso si voglia ricominciare il livello
+                }
+            } else {
+                alert('Risposta sbagliata. Ricominciamo il livello.');
+                resetLevel();
+            }
+        }
+    }
+
+    function canMove(x, y) {
+        // Non permettere di uscire dal labirinto o attraversare i muri
+        if (x < 0 || y < 0 || x > 19 || y > 19) return false;
+        return !walls.some(wall => wall.x === x && wall.y === y);
+    }
+
+    document.addEventListener('keydown', (event) => {
+        let newPosition = { ...playerPosition };
+
+        if (event.key === 'ArrowUp') newPosition.y--;
+        if (event.key === 'ArrowDown') newPosition.y++;
+        if (event.key === 'ArrowLeft') newPosition.x--;
+        if (event.key === 'ArrowRight') newPosition.x++;
+
+        if (canMove(newPosition.x, newPosition.y)) {
+            playerPosition = newPosition;
+            positionPlayer();
+
+            const currentDoor = doors.find(d => d.x === playerPosition.x && d.y === playerPosition.y);
+            if (currentDoor) {
+                document.getElementById('puzzle-question').innerText = currentDoor.question;
+                document.getElementById('puzzle').style.display = 'block';
+            }
+
+            // Controllo per l'uscita
+            if (playerPosition.x === exit.x && playerPosition.y === exit.y) {
+                alert('Hai raggiunto l\'uscita! Hai vinto!');
+                resetLevel(); // Puoi anche decidere di terminare o riavviare il gioco qui
+            }
+        }
+    });
+
+    createMaze();
+    positionPlayer();
+</script>
+
+</body>
+</html>
