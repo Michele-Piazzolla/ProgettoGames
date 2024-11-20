@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto di Logica</title>
+    <style>
+        /* Stile globale */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Contenitori principali */
+        #video-container, #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #video-container {
+            background: black;
+        }
+
+        #game-container {
+            display: none;
+            flex-direction: row;
+        }
+
+        /* Schermata divisa */
+        #left-panel, #right-panel {
+            flex: 1;
+            overflow: auto;
+        }
+
+        #left-panel {
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-right: 1px solid #000;
+        }
+
+        #right-panel {
+            background-color: #0915ea;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Labirinto e istruzioni */
+        #maze {
+            width: 400px;
+            height: 400px;
+            background-color: #fff;
+            position: relative;
+            border: 2px solid #333;
+        }
+
+        #instructions {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid black;
+            background-color: white;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        /* Risultati */
+        #results {
+            width: 80%;
+            border: 1px solid black;
+            background-color: white;
+            border-radius: 10px;
+            margin-top: 20px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid black;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .result.correct {
+            background-color: lime;
+        }
+
+        .result.incorrect {
+            background-color: red;
+        }
+
+        /* Labirinto elementi */
+        .player {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            position: absolute;
+        }
+
+        .wall {
+            width: 20px;
+            height: 20px;
+            background-color: black;
+            position: absolute;
+        }
+
+        .door {
+            width: 20px;
+            height: 20px;
+            background-color: blue;
+            position: absolute;
+        }
+
+        .exit {
+            width: 20px;
+            height: 20px;
+            background-color: green;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenitore video -->
+    <div id="video-container">
+        <video id="intro-video" autoplay muted>
+            <source src="video.mp4" type="video/mp4">
+            Il tuo browser non supporta il tag video.
+        </video>
+    </div>
+
+    <!-- Contenitore gioco -->
+    <div id="game-container">
+        <div id="left-panel">
+            <h1 style="color: white;">Labirinto di Logica</h1>
+            <div id="maze"></div>
+            <div id="instructions">
+                <p>Usa le frecce per muoverti nel labirinto.</p>
+                <p>Raggiungi una porta e rispondi alla domanda per passare!</p>
+            </div>
+        </div>
+        <div id="right-panel">
+            <h1 style="color: white;">Risultati</h1>
+            <div id="results">
+                <p>Nessuna risposta ancora.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Riferimenti agli elementi
+        const videoContainer = document.getElementById('video-container');
+        const gameContainer = document.getElementById('game-container');
+        const introVideo = document.getElementById('intro-video');
+
+        let playerPosition = { x: 0, y: 1 };
+
+        const walls = [
+    { x: 5, y: 1 }, { x: 6, y: 1 }, { x: 7, y: 1 }, { x: 8, y: 1 }, { x: 9, y: 1 },
+  { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 2 }, 
+  { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 1, y: 5 }, { x: 1, y: 6 }, { x: 1, y: 7 },
+  { x: 1, y: 8 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }, { x: 3, y: 8 },
+  { x: 3, y: 7 }, { x: 3, y: 6 }, { x: 3, y: 5 }, { x: 4, y: 3 }, { x: 5, y: 3 },
+  { x: 6, y: 3 }, { x: 10, y: 1 }, { x: 11, y: 1 }, { x: 6, y: 4 }, { x: 6, y: 5 },
+  { x: 5, y: 5 }, { x: 4, y: 7 }, { x: 6, y: 6 }, { x: 6, y: 7 }, { x: 6, y: 8 },
+  { x: 6, y: 9 }, { x: 5, y: 9 }, { x: 5, y: 10 }, { x: 5, y: 11 }, { x: 4, y: 11 },
+  { x: 3, y: 11 }, { x: 2, y: 11 }, { x: 1, y: 11 }, { x: 0, y: 11 }, { x: 8, y: 3 },
+  { x: 8, y: 4 }, { x: 8, y: 5 }, { x: 8, y: 6 }, { x: 8, y: 7 }, { x: 8, y: 8 },
+  { x: 6, y: 11 }, { x: 7, y: 11 }, { x: 8, y: 11 }, { x: 9, y: 11 }, { x: 8, y: 9 },
+  { x: 8, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 9 }, { x: 11, y: 9 }, { x: 12, y: 9 },
+  { x: 12, y: 10 }, { x: 12, y: 11 }, { x: 12, y: 12 }, { x: 12, y: 13 }, { x: 11, y: 13 },
+  { x: 10, y: 13 }, { x: 9, y: 13 }, { x: 8, y: 13 }, { x: 7, y: 13 }, { x: 6, y: 13 },
+  { x: 5, y: 13 }, { x: 4, y: 13 }, { x: 3, y: 13 }, { x: 2, y: 13 }, { x: 1, y: 13 },
+  { x: 1, y: 14 }, { x: 1, y: 15 }, { x: 1, y: 16 }, { x: 1, y: 17 }, { x: 1, y: 18 },
+  { x: 2, y: 18 }, { x: 3, y: 18 }, { x: 4, y: 18 }, { x: 5, y: 18 }, { x: 6, y: 18 },
+  { x: 4, y: 14 }, { x: 4, y: 15 }, { x: 3, y: 15 }, { x: 3, y: 16 }, { x: 6, y: 17 },
+  { x: 6, y: 16 }, { x: 6, y: 15 }, { x: 7, y: 15 }, { x: 8, y: 15 }, { x: 9, y: 15 },
+  { x: 9, y: 16 }, { x: 9, y: 17 }, { x: 10, y: 17 }, { x: 11, y: 17 }, { x: 11, y: 18 },
+  { x: 11, y: 19 }, { x: 10, y: 8 }, { x: 10, y: 7 }, { x: 10, y: 6 }, { x: 11, y: 6 },
+  { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 }, { x: 15, y: 6 }, { x: 15, y: 7 },
+  { x: 15, y: 8 }, { x: 15, y: 9 }, { x: 15, y: 5 }, { x: 15, y: 4 }, { x: 15, y: 3 },
+  { x: 16, y: 3 }, { x: 10, y: 2 }, { x: 10, y: 3 }, { x: 10, y: 4 }, { x: 9, y: 4 },
+  { x: 8, y: 17 }, { x: 12, y: 1 }, { x: 13, y: 1 }, { x: 14, y: 1 }, { x: 15, y: 1 },
+  { x: 16, y: 1 }, { x: 17, y: 1 }, { x: 18, y: 1 }, { x: 18, y: 2 }, { x: 18, y: 3 },
+  { x: 18, y: 4 }, { x: 18, y: 5 }, { x: 17, y: 5 }, { x: 18, y: 6 }, { x: 18, y: 7 },
+  { x: 16, y: 7 }, { x: 18, y: 8 }, { x: 18, y: 9 }, { x: 17, y: 9 }, { x: 13, y: 2 },
+  { x: 13, y: 3 }, { x: 13, y: 4 }, { x: 12, y: 4 }, { x: 11, y: 2 }, { x: 18, y: 10 },
+  { x: 18, y: 11 }, { x: 17, y: 11 }, { x: 16, y: 11 }, { x: 15, y: 11 }, { x: 14, y: 11 },
+  { x: 14, y: 9 }, { x: 12, y: 8 }, { x: 14, y: 12 }, { x: 14, y: 13 }, { x: 15, y: 13 },
+  { x: 16, y: 13 }, { x: 17, y: 13 }, { x: 11, y: 15 }, { x: 12, y: 15 }, { x: 13, y: 15 },
+  { x: 14, y: 15 }, { x: 15, y: 15 }, { x: 16, y: 15 }, { x: 17, y: 15 }, { x: 18, y: 15 },
+  { x: 18, y: 14 }, { x: 18, y: 13 }, { x: 13, y: 16 }, { x: 13, y: 17 }, { x: 13, y: 18 },
+  { x: 14, y: 18 }, { x: 15, y: 18 }, { x: 15, y: 17 }, { x: 16, y: 18 }, { x: 17, y: 16 },
+  { x: 17, y: 18 }, { x: 18, y: 18 }
+    ];
+        const doors = [
+        { x: 2, y: 8, question: 'Qual è 2 + 2?', answer: '4' },
+        { x: 8, y: 16, question: 'Qual è la capitale della Francia?', answer: 'Parigi' },
+        { x: 11, y: 8, question: 'Qual è la capitale della Francia?', answer: 'Parigi' }
+    ];
+        const exit = { x: 10, y: 19 };
+
+
+        // Mostra il gioco alla fine del video
+        introVideo.onended = () => {
+            videoContainer.style.display = 'none';
+            gameContainer.style.display = 'flex';
+        };
+
+        const maze = document.getElementById('maze');
+        const player = document.createElement('div');
+        player.classList.add('player');
+        maze.appendChild(player);
+
+        
+        let isQuestionActive = false;
+
+        // Posiziona il player
+        function positionPlayer() {
+            player.style.top = playerPosition.y * 20 + 'px';
+            player.style.left = playerPosition.x * 20 + 'px';
+        }
+
+        // Controlla se il player può muoversi in una posizione
+        function canMoveTo(x, y) {
+            if (isQuestionActive) return false;
+            if (x < 0 || y < 0 || x > 19 || y > 19) return false;
+            return !walls.some(wall => wall.x === x && wall.y === y);
+        }
+
+        // Movimento del player
+        document.addEventListener('keydown', (event) => {
+            if (isQuestionActive) return;
+
+            let newPosition = { ...playerPosition };
+            if (event.key === 'ArrowUp') newPosition.y--;
+            if (event.key === 'ArrowDown') newPosition.y++;
+            if (event.key === 'ArrowLeft') newPosition.x--;
+            if (event.key === 'ArrowRight') newPosition.x++;
+
+            if (canMoveTo(newPosition.x, newPosition.y)) {
+                playerPosition = newPosition;
+                positionPlayer();
+            }
+        });
+
+        positionPlayer(); // Posiziona inizialmente il player
+    </script>
+</body>
+</html>
