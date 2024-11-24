@@ -6,7 +6,7 @@
     <title>Labirinto di Logica</title>
     <style>
         body { 
-            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif, sans-serif; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif, sans-serif; 
             background-color: #0915ea; 
             margin: 0; 
             overflow: hidden; 
@@ -43,7 +43,7 @@
         .player { width: 20px; height: 20px; background-image: url(New\ Piskel.png); position: absolute; }
         .wall { width: 20px; height: 20px; background-image: url(Cattura.PNG);background-size: auto; position: absolute; }
         .door { width: 20px; height: 20px; background-image: url(domanda.png); position: absolute; }
-        .exit { width: 20px; height: 20px; background-color: green; position: absolute; }
+        .exit { width: 20px; height: 20px; background-image: url(porta.png); position: absolute; }
         #puzzle { margin-top: 20px; display: none; }
         #controls { 
             display: flex;
@@ -74,6 +74,14 @@
         .control-btn:hover {
             background-color: #555;
         }
+        #puzzle{
+            background-color: whitesmoke;
+            padding: 10px;
+            margin: 10px;
+            border: 5px black;
+            border-radius: 15px;
+
+        }
     </style>
 </head>
 <body>
@@ -87,6 +95,7 @@
     <div id="game">
         <h1>Labirinto di Logica</h1>
         <div id="maze"></div>
+
         <div id="puzzle">
             <p id="puzzle-question"></p>
             <input type="text" id="puzzle-answer" />
