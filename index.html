@@ -6,10 +6,11 @@
     <title>Labirinto di Logica</title>
     <style>
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif, sans-serif; 
             background-color: #0915ea; 
             margin: 0; 
-            overflow: hidden; }
+            overflow: hidden; 
+        }
         
         #video-container {
             position: fixed;
@@ -26,13 +27,53 @@
         #game-container {
             display: none;
         }
-        #game { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
-        #maze { width: 400px; height: 400px; background-color: #fff; position: relative; border: 2px solid #333; }
-        .player { width: 20px; height: 20px; background-color: red; position: absolute; }
-        .wall { width: 20px; height: 20px; background-color: black; position: absolute; }
-        .door { width: 20px; height: 20px; background-color: blue; position: absolute; }
+        #game { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin-top: 20px; 
+        }
+        #maze { 
+            width: 400px; 
+            height: 400px; 
+            background-color: #fff; 
+            position: relative; 
+            border: 2px solid #333; 
+        }
+        .player { width: 20px; height: 20px; background-image: url(New\ Piskel.png); position: absolute; }
+        .wall { width: 20px; height: 20px; background-image: url(Cattura.PNG);background-size: auto; position: absolute; }
+        .door { width: 20px; height: 20px; background-image: url(domanda.png); position: absolute; }
         .exit { width: 20px; height: 20px; background-color: green; position: absolute; }
         #puzzle { margin-top: 20px; display: none; }
+        #controls { 
+            display: flex;
+            flex-direction: column; 
+            margin-top: 20px; 
+            align-items: center; 
+        }
+        .control-row {
+            display: flex;
+            justify-content: center;
+            margin: 5px 0;
+        }
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            border-radius: 50%;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            font-size: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .control-btn:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
@@ -51,11 +92,20 @@
             <input type="text" id="puzzle-answer" />
             <button onclick="checkAnswer()">Invia</button>
         </div>
-
-
+        <div id="controls">
+            <div class="control-row">
+                <button class="control-btn" onclick="move('ArrowUp')">↑</button>
+            </div>
+            <div class="control-row">
+                <button class="control-btn" onclick="move('ArrowLeft')">←</button>
+                <button class="control-btn" onclick="move('ArrowDown')">↓</button>
+                <button class="control-btn" onclick="move('ArrowRight')">→</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-
     const videoContainer = document.getElementById('video-container');
     const gameContainer = document.getElementById('game-container');
     const introVideo = document.getElementById('intro-video');
@@ -64,12 +114,12 @@
         gameContainer.style.display = 'block';
     };
 
-    
     const maze = document.getElementById('maze');
     const player = document.createElement('div');
     player.classList.add('player');
     maze.appendChild(player);
-    let playerPosition = { x: 0, y: 1 };
+    let playerPosition = { x: 10, y: 0 };
+    let inPuzzle = false;
 
     const walls = [
     { x: 5, y: 1 }, { x: 6, y: 1 }, { x: 7, y: 1 }, { x: 8, y: 1 }, { x: 9, y: 1 },
@@ -115,7 +165,6 @@
         { x: 8, y: 16, question: 'Qual è la capitale della Francia?', answer: 'Parigi' },
         { x: 11, y: 8, question: 'Qual è la capitale della Francia?', answer: 'Parigi' }
     ];
-
     const exit = { x: 10, y: 19 };
 
     function positionPlayer() {
@@ -151,6 +200,7 @@
         playerPosition = { x: 1, y: 1 };
         positionPlayer();
         document.getElementById('puzzle').style.display = 'none';
+        inPuzzle = false;
     }
 
     function checkAnswer() {
@@ -160,12 +210,7 @@
             if (answer === currentDoor.answer) {
                 alert('Risposta corretta! Puoi passare.');
                 document.getElementById('puzzle').style.display = 'none';
-
-                // Controlla se il giocatore ha raggiunto l'uscita
-                if (playerPosition.x === exit.x && playerPosition.y === exit.y) {
-                    alert('Hai vinto! Sei uscito dal labirinto!');
-                    resetLevel(); // In caso si voglia ricominciare il livello
-                }
+                inPuzzle = false;
             } else {
                 alert('Risposta sbagliata. Ricominciamo il livello.');
                 resetLevel();
@@ -174,18 +219,19 @@
     }
 
     function canMove(x, y) {
-        // Non permettere di uscire dal labirinto o attraversare i muri
+        if (inPuzzle) return false;
         if (x < 0 || y < 0 || x > 19 || y > 19) return false;
         return !walls.some(wall => wall.x === x && wall.y === y);
     }
 
-    document.addEventListener('keydown', (event) => {
-        let newPosition = { ...playerPosition };
+    function move(direction) {
+        if (inPuzzle) return;
 
-        if (event.key === 'ArrowUp') newPosition.y--;
-        if (event.key === 'ArrowDown') newPosition.y++;
-        if (event.key === 'ArrowLeft') newPosition.x--;
-        if (event.key === 'ArrowRight') newPosition.x++;
+        let newPosition = { ...playerPosition };
+        if (direction === 'ArrowUp') newPosition.y--;
+        if (direction === 'ArrowDown') newPosition.y++;
+        if (direction === 'ArrowLeft') newPosition.x--;
+        if (direction === 'ArrowRight') newPosition.x++;
 
         if (canMove(newPosition.x, newPosition.y)) {
             playerPosition = newPosition;
@@ -195,19 +241,19 @@
             if (currentDoor) {
                 document.getElementById('puzzle-question').innerText = currentDoor.question;
                 document.getElementById('puzzle').style.display = 'block';
+                inPuzzle = true;
             }
 
-            // Controllo per l'uscita
             if (playerPosition.x === exit.x && playerPosition.y === exit.y) {
                 alert('Hai raggiunto l\'uscita! Hai vinto!');
-                resetLevel(); // Puoi anche decidere di terminare o riavviare il gioco qui
+                resetLevel();
             }
         }
-    });
+    }
 
+    document.addEventListener('keydown', (event) => move(event.key));
     createMaze();
     positionPlayer();
 </script>
-
 </body>
 </html>
