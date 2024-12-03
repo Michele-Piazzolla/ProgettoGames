@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto di Logica - Livello 2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url(SfondoLivelli.gif);
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #home-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        #home-button:hover {
+            background-color: #0056b3;
+        }
+
+        #timer {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #maze {
+            width: 400px;
+            height: 400px;
+            background-color: #333;
+            position: relative;
+            border: 5px solid #000000;
+            border-radius: 2%;
+        }
+
+        .player {
+            width: 20px;
+            height: 20px;
+            background-image: url('Player.png');
+            background-size: cover;
+            position: absolute;
+        }
+
+        .wall {
+            width: 20px;
+            height: 20px;
+            background-image: url('Cattura.PNG');
+            
+            position: absolute;
+        }
+
+        .door {
+            width: 20px;
+            height: 20px;
+            background-image: url('domanda.png');
+            background-size: cover;
+            position: absolute;
+        }
+
+        .exit {
+            width: 20px;
+            height: 20px;
+            background-image: url('porta.png');
+            background-size: cover;
+            position: absolute;
+        }
+
+        #puzzle {
+            margin-top: 20px;
+            display: none;
+            background-color: whitesmoke;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            border-radius: 50%;
+            border: none;
+            background-color: #333;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .control-btn:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <button id="home-button" onclick="goHome()">Home</button>
+    <div id="timer">Tempo: 0s</div>
+    <br><br><br><br><br>
+    <div id="game-container">
+        
+        <div id="maze"></div>
+        <div id="puzzle">
+            <p id="puzzle-question"></p>
+            <input type="text" id="puzzle-answer" />
+            <button onclick="checkAnswer()">Invia</button>
+        </div>
+        <div id="controls">
+            <div class="control-row">
+                <button class="control-btn" onclick="move('ArrowUp')">↑</button>
+            </div>
+            <div class="control-row">
+                <button class="control-btn" onclick="move('ArrowLeft')">←</button>
+                <button class="control-btn" onclick="move('ArrowDown')">↓</button>
+                <button class="control-btn" onclick="move('ArrowRight')">→</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let questionsAnswered = 0;
+        let timer = 0;
+        let timerInterval;
+        const maze = document.getElementById('maze');
+        const player = document.createElement('div');
+        player.classList.add('player');
+        maze.appendChild(player);
+        let playerPosition = {x:10,y:2};
+        let inPuzzle = false;
+
+        const walls = [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 1, y: 1 }, { x: 1, y: 2 },
+{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 },
+{ x: 5, y: 4 }, { x: 5, y: 3 }, { x: 5, y: 2 }, { x: 5, y: 1 }, { x: 6, y: 1 },
+{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 10, y: 1 }, { x: 9, y: 1 }, { x: 9, y: 2 },
+{ x: 9, y: 3 }, { x: 10, y: 3 }, { x: 11, y: 3 }, { x: 12, y: 0 }, { x: 12, y: 1 },
+{ x: 12, y: 2 }, { x: 12, y: 3 }, { x: 9, y: 4 }, { x: 9, y: 5 }, { x: 9, y: 6 },
+{ x: 10, y: 6 }, { x: 11, y: 6 }, { x: 11, y: 5 }, { x: 14, y: 6 }, { x: 15, y: 6 },
+{ x: 16, y: 6 }, { x: 17, y: 6 }, { x: 19, y: 6 }, { x: 18, y: 6 }, { x: 18, y: 5 },
+{ x: 18, y: 4 }, { x: 17, y: 4 }, { x: 16, y: 4 }, { x: 14, y: 4 }, { x: 15, y: 4 },
+{ x: 12, y: 5 }, { x: 14, y: 7 }, { x: 13, y: 7 }, { x: 8, y: 4 }, { x: 7, y: 4 },
+{ x: 7, y: 5 }, { x: 7, y: 6 }, { x: 7, y: 7 }, { x: 13, y: 8 }, { x: 13, y: 9 },
+{ x: 11, y: 7 }, { x: 11, y: 8 }, { x: 11, y: 9 }, { x: 7, y: 8 }, { x: 8, y: 8 },
+{ x: 9, y: 8 }, { x: 8, y: 10 }, { x: 7, y: 10 }, { x: 6, y: 10 }, { x: 5, y: 10 },
+{ x: 5, y: 9 }, { x: 1, y: 7 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+{ x: 1, y: 8 }, { x: 1, y: 9 }, { x: 1, y: 10 }, { x: 2, y: 6 }, { x: 1, y: 6 },
+{ x: 3, y: 8 }, { x: 3, y: 9 }, { x: 3, y: 10 }, { x: 3, y: 11 }, { x: 14, y: 3 },
+{ x: 18, y: 2 }, { x: 19, y: 2 }, { x: 14, y: 1 }, { x: 15, y: 1 }, { x: 16, y: 1 },
+{ x: 16, y: 0 }, { x: 18, y: 0 }, { x: 19, y: 0 }, { x: 3, y: 12 }, { x: 2, y: 12 },
+{ x: 1, y: 12 }, { x: 0, y: 12 }, { x: 4, y: 11 }, { x: 5, y: 11 }, { x: 11, y: 10 },
+{ x: 10, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 12 }, { x: 8, y: 11 }, { x: 5, y: 8 },
+{ x: 5, y: 12 }, { x: 5, y: 13 }, { x: 5, y: 14 }, { x: 8, y: 12 }, { x: 7, y: 12 },
+{ x: 11, y: 12 }, { x: 12, y: 12 }, { x: 18, y: 7 }, { x: 18, y: 8 }, { x: 17, y: 8 },
+{ x: 16, y: 8 }, { x: 16, y: 9 }, { x: 15, y: 9 }, { x: 15, y: 10 }, { x: 18, y: 10 },
+{ x: 18, y: 11 }, { x: 17, y: 11 }, { x: 17, y: 12 }, { x: 16, y: 12 }, { x: 15, y: 12 },
+{ x: 14, y: 12 }, { x: 6, y: 14 }, { x: 7, y: 14 }, { x: 8, y: 14 }, { x: 9, y: 14 },
+{ x: 10, y: 14 }, { x: 11, y: 14 }, { x: 12, y: 14 }, { x: 13, y: 12 }, { x: 13, y: 14 },
+{ x: 14, y: 14 }, { x: 16, y: 13 }, { x: 16, y: 14 }, { x: 16, y: 15 }, { x: 12, y: 15 },
+{ x: 12, y: 16 }, { x: 16, y: 16 }, { x: 15, y: 16 }, { x: 14, y: 16 }, { x: 11, y: 16 },
+{ x: 10, y: 16 }, { x: 8, y: 15 }, { x: 8, y: 16 }, { x: 8, y: 17 }, { x: 7, y: 17 },
+{ x: 6, y: 17 }, { x: 6, y: 16 }, { x: 4, y: 16 }, { x: 5, y: 16 }, { x: 3, y: 16 },
+{ x: 3, y: 15 }, { x: 3, y: 14 }, { x: 2, y: 14 }, { x: 1, y: 14 }, { x: 1, y: 15 },
+{ x: 1, y: 16 }, { x: 1, y: 17 }, { x: 1, y: 18 }, { x: 2, y: 18 }, { x: 4, y: 18 },
+{ x: 19, y: 13 }, { x: 19, y: 14 }, { x: 18, y: 14 }, { x: 18, y: 15 }, { x: 18, y: 16 },
+{ x: 19, y: 16 }, { x: 16, y: 17 }, { x: 16, y: 18 }, { x: 17, y: 18 }, { x: 18, y: 18 },
+{ x: 14, y: 18 }, { x: 13, y: 18 }, { x: 12, y: 18 }, { x: 4, y: 19 }, { x: 5, y: 19 },
+{ x: 6, y: 19 }, { x: 7, y: 19 }, { x: 8, y: 19 }, { x: 9, y: 19 }, { x: 10, y: 19 },
+{ x: 14, y: 17 }, { x: 10, y: 18 }, { x: 13, y: 11 }, { x: 16, y: 2 }];
+
+        const doors = [
+            { x: 3, y: 3, question: 'Qual è 5 + 5?', answer: '10' },
+            { x: 8, y: 5, question: 'Qual è la capitale d\'Italia?', answer: 'Roma' },
+            { x: 2, y: 15, question: 'Quanti miliardi di persone ci sono nel mondo?', answer: '8' }
+        ];
+        const exit = { x:19,y:1 };
+
+        function positionPlayer() {
+            player.style.top = playerPosition.y * 20 + 'px';
+            player.style.left = playerPosition.x * 20 + 'px';
+        }
+
+        function createMaze() {
+            walls.forEach(wall => {
+                const wallDiv = document.createElement('div');
+                wallDiv.classList.add('wall');
+                wallDiv.style.top = wall.y * 20 + 'px';
+                wallDiv.style.left = wall.x * 20 + 'px';
+                maze.appendChild(wallDiv);
+            });
+            doors.forEach(door => {
+                const doorDiv = document.createElement('div');
+                doorDiv.classList.add('door');
+                doorDiv.style.top = door.y * 20 + 'px';
+                doorDiv.style.left = door.x * 20 + 'px';
+                maze.appendChild(doorDiv);
+            });
+            const exitDiv = document.createElement('div');
+            exitDiv.classList.add('exit');
+            exitDiv.style.top = exit.y * 20 + 'px';
+            exitDiv.style.left = exit.x * 20 + 'px';
+            maze.appendChild(exitDiv);
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timer++;
+                document.getElementById('timer').innerText = `Tempo: ${timer}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function checkAnswer() {
+            const answer = document.getElementById('puzzle-answer').value.toLowerCase();
+            const currentDoor = doors.find(d => d.x === playerPosition.x && d.y === playerPosition.y);
+            if (currentDoor && answer === currentDoor.answer.toLowerCase()) {
+                alert('Risposta corretta! Puoi passare.');
+                document.getElementById('puzzle').style.display = 'none';
+                inPuzzle = false;
+                questionsAnswered++;
+            } else {
+                alert('Risposta sbagliata. Riprova.');
+            }
+        }
+
+        function canMove(x, y) {
+            if (inPuzzle) return false;
+            if (x < 0 || y < 0 || x > 19 || y > 19) return false;
+            return !walls.some(wall => wall.x === x && wall.y === y);
+        }
+
+        function move(direction) {
+            if (inPuzzle) return;
+            let newPosition = { ...playerPosition };
+            if (direction === 'ArrowUp') newPosition.y--;
+            if (direction === 'ArrowDown') newPosition.y++;
+            if (direction === 'ArrowLeft') newPosition.x--;
+            if (direction === 'ArrowRight') newPosition.x++;
+
+            if (canMove(newPosition.x, newPosition.y)) {
+                playerPosition = newPosition;
+                positionPlayer();
+
+                const currentDoor = doors.find(d => d.x === playerPosition.x && d.y === playerPosition.y);
+                if (currentDoor) {
+                    document.getElementById('puzzle-question').innerText = currentDoor.question;
+                    document.getElementById('puzzle').style.display = 'block';
+                    inPuzzle = true;
+                }
+
+                if (playerPosition.x === exit.x && playerPosition.y === exit.y) {
+                    stopTimer();
+                    alert(`Livello completato! Tempo: ${timer}s, Domande risposte: ${questionsAnswered}`);
+                    sessionStorage.setItem('level2Completed', JSON.stringify({ time: timer, questions: questionsAnswered }));
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+
+        function goHome() {
+            stopTimer();
+            window.location.href = 'index.html';
+        }
+
+        document.addEventListener('keydown', (event) => move(event.key));
+        positionPlayer();
+        createMaze();
+        startTimer();
+    </script>
+</body>
+</html>
